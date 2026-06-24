@@ -4,15 +4,18 @@
 @section('content')
 <div class="card p-4 mb-4 d-flex flex-row justify-content-between align-items-center">
     <div>
-        <h6 class="mb-1">Ranking Kandidat Project Manager</h6>
-        <small class="text-muted">Skor Akhir = (0.6 × Skor AHP) + (0.4 × Skor Random Forest)</small>
+        <h6 class="mb-1">Ranking Kandidat Pelamar Project Manager</h6>
+        <small class="text-muted">Skor Akhir = (0.6 × Skor AHP) + (0.4 × Skor Random Forest), dihitung dari kandidat pelamar yang CV-nya sudah diunggah.</small>
     </div>
     <div class="d-flex gap-2">
+        @if (in_array(auth()->user()->role, ['admin', 'manajer_sdm']))
         <form action="{{ route('hasil-spk.proses') }}" method="POST">
             @csrf
             <button class="btn btn-primary"><i class="bi bi-arrow-repeat"></i> Hitung Ulang Ranking</button>
         </form>
+        @endif
         <a href="{{ route('hasil-spk.export') }}" class="btn btn-outline-secondary"><i class="bi bi-download"></i> Export CSV</a>
+        <a href="{{ route('hasil-spk.export-pdf') }}" class="btn btn-outline-danger"><i class="bi bi-file-earmark-pdf"></i> Export PDF</a>
     </div>
 </div>
 
@@ -45,7 +48,7 @@
                 </td>
             </tr>
         @empty
-            <tr><td colspan="6" class="text-muted">Belum ada data. Pastikan AHP dan Random Forest sudah dijalankan, lalu klik "Hitung Ulang Ranking".</td></tr>
+            <tr><td colspan="6" class="text-muted">Belum ada data. Upload CV kandidat di menu CV Analytics, jalankan prediksi, lalu klik "Hitung Ulang Ranking".</td></tr>
         @endforelse
         </tbody>
     </table>
