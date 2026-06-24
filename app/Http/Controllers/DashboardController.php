@@ -11,14 +11,15 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $totalKandidat = Kandidat::count();
+        $totalDataTraining = Kandidat::where('sumber', 'dataset')->count();
+        $totalPelamarCv = Kandidat::where('sumber', 'cv')->count();
         $totalLayak = PrediksiRandomForest::where('status', 'Layak')->count();
         $totalTidakLayak = PrediksiRandomForest::where('status', 'Tidak Layak')->count();
         $kriterias = Kriteria::orderBy('kode')->get();
-        $topKandidat = Ranking::with('kandidat')->orderBy('ranking')->take(5)->get();
+        $topKandidat = Ranking::with('kandidat')->orderBy('ranking')->take(10)->get();
 
         return view('dashboard.index', compact(
-            'totalKandidat', 'totalLayak', 'totalTidakLayak', 'kriterias', 'topKandidat'
+            'totalDataTraining', 'totalPelamarCv', 'totalLayak', 'totalTidakLayak', 'kriterias', 'topKandidat'
         ));
     }
 }
