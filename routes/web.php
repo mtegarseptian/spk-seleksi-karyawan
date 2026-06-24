@@ -1,23 +1,51 @@
 <?php
 
 use App\Http\Controllers\AhpController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\CvAnalyticsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatasetController;
 use App\Http\Controllers\HasilSpkController;
 use App\Http\Controllers\RandomForestController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+// ---------- AUTH (tanpa login) ----------
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.submit');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::get('/dataset', [DatasetController::class, 'index'])->name('dataset.index');
-Route::post('/dataset/import', [DatasetController::class, 'import'])->name('dataset.import');
+// ---------- HALAMAN YANG WAJIB LOGIN ----------
+Route::middleware('auth')->group(function () {
 
-Route::get('/ahp', [AhpController::class, 'index'])->name('ahp.index');
-Route::post('/ahp/hitung', [AhpController::class, 'hitung'])->name('ahp.hitung');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::get('/random-forest', [RandomForestController::class, 'index'])->name('random-forest.index');
-Route::post('/random-forest/train', [RandomForestController::class, 'train'])->name('random-forest.train');
+    Route::get('/hasil-spk', [HasilSpkController::class, 'index'])->name('hasil-spk.index');
+    Route::get('/hasil-spk/export', [HasilSpkController::class, 'export'])->name('hasil-spk.export');
+    Route::get('/hasil-spk/export-pdf', [HasilSpkController::class, 'exportPdf'])->name('hasil-spk.export-pdf');
 
-Route::get('/hasil-spk', [HasilSpkController::class, 'index'])->name('hasil-spk.index');
-Route::post('/hasil-spk/proses', [HasilSpkController::class, 'proses'])->name('hasil-spk.proses');
-Route::get('/hasil-spk/export', [HasilSpkController::class, 'export'])->name('hasil-spk.export');
+    // Admin & HRD: kelola data & CV
+    Route::middleware('role:admin,hrd')->group(function () {
+        Route::get('/dataset', [DatasetController::class, 'index'])->name('dataset.index');
+        Route::post('/dataset/import', [DatasetController::class, 'import'])->name('dataset.import');
+
+        Route::get('/cv-analytics', [CvAnalyticsController::class, 'index'])->name('cv-analytics.index');
+        Route::get('/cv-analytics/upload', [CvAnalyticsController::class, 'create'])->name('cv-analytics.create');
+        Route::post('/cv-analytics/upload', [CvAnalyticsController::class, 'store'])->name('cv-analytics.store');
+        Route::get('/cv-analytics/{kandidat}', [CvAnalyticsController::class, 'show'])->name('cv-analytics.show');
+        Route::post('/cv-analytics/{kandidat}/predict', [RandomForestController::class, 'predictSingle'])->name('cv-analytics.predict');
+    });
+
+    // Admin saja: konfigurasi model
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/ahp', [AhpController::class, 'index'])->name('ahp.index');
+        Route::post('/ahp/hitung', [AhpController::class, 'hitung'])->name('ahp.hitung');
+
+        Route::get('/random-forest', [RandomForestController::class, 'index'])->name('random-forest.index');
+        Route::post('/random-forest/train', [RandomForestController::class, 'train'])->name('random-forest.train');
+    });
+
+    // Admin & Manajer SDM: bisa memproses ulang ranking final
+    Route::middleware('role:admin,manajer_sdm')->group(function () {
+        Route::post('/hasil-spk/proses', [HasilSpkController::class, 'proses'])->name('hasil-spk.proses');
+    });
+});
