@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Ranking;
 use App\Services\HybridEngineService;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class HasilSpkController extends Controller
 {
@@ -39,5 +40,17 @@ class HasilSpkController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    public function exportPdf()
+    {
+        $rankings = Ranking::with('kandidat')->orderBy('ranking')->get();
+
+        $pdf = Pdf::loadView('hasil_spk.pdf', [
+            'rankings' => $rankings,
+            'tanggal' => now()->translatedFormat('d F Y'),
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download('laporan_rekomendasi_pm_' . now()->format('Ymd_His') . '.pdf');
     }
 }
