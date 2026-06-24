@@ -17,19 +17,24 @@ class HybridEngineService
         $kriterias = Kriteria::all();
         $bobot = $kriterias->mapWithKeys(fn ($k) => [$k->kode => (float) $k->bobot])->toArray();
 
-        $kandidats = Kandidat::whereNotNull('experience_encoded')
+        // Skala normalisasi diambil dari data historis (big data) agar lebih stabil
+        $datasetReferensi = Kandidat::where('sumber', 'dataset');
+        $minMax = [
+            'experience_encoded' => [$datasetReferensi->min('experience_encoded'), $datasetReferensi->max('experience_encoded')],
+            'education_level_encoded' => [$datasetReferensi->min('education_level_encoded'), $datasetReferensi->max('education_level_encoded')],
+            'training_hours' => [$datasetReferensi->min('training_hours'), $datasetReferensi->max('training_hours')],
+        ];
+
+        // Yang diranking adalah kandidat PELAMAR (hasil upload CV),
+        // bukan data historis Kaggle yang hanya dipakai untuk training Random Forest.
+        $kandidats = Kandidat::where('sumber', 'cv')
+            ->whereNotNull('experience_encoded')
             ->whereNotNull('education_level_encoded')
             ->get();
 
         if ($kandidats->isEmpty()) {
             return;
         }
-
-        $minMax = [
-            'experience_encoded' => [$kandidats->min('experience_encoded'), $kandidats->max('experience_encoded')],
-            'education_level_encoded' => [$kandidats->min('education_level_encoded'), $kandidats->max('education_level_encoded')],
-            'training_hours' => [$kandidats->min('training_hours'), $kandidats->max('training_hours')],
-        ];
 
         $hasil = [];
 
@@ -83,6 +88,7 @@ class HybridEngineService
     {
         [$min, $max] = $minMax;
         if ($max == $min) return 0;
-        return ($value - $min) / ($max - $min);
+        $result = ($value - $min) / ($max - $min);
+        return max(0, min(1, $result)); // dibatasi 0-1 supaya tidak overflow
     }
 }
