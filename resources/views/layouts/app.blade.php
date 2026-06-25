@@ -3,103 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'SPK Seleksi Karyawan')</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <title>@yield('title') - SPK Seleksi Karyawan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    
     <style>
-        body { background-color: #f7f8fa; font-family: 'Segoe UI', sans-serif; }
-        .sidebar { min-height: 100vh; background: #ffffff; border-right: 1px solid #eef0f3; }
-        .sidebar .nav-link { color: #4a4f57; border-radius: 8px; margin-bottom: 4px; padding: 10px 14px; }
-        .sidebar .nav-link.active { background: #0d6efd; color: #fff; }
-        .sidebar .nav-link:hover { background: #f1f3f5; }
-        .card { border: none; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
-        .navbar-top { background: #fff; border-bottom: 1px solid #eef0f3; }
-        .brand-logo { font-weight: 700; color: #0d6efd; }
-        table thead th { background: #f7f8fa; font-weight: 600; font-size: .85rem; text-transform: uppercase; color: #6c757d; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f6f9;
+            color: #333333;
+            overflow-x: hidden;
+        }
+        /* Custom Modern Sidebar */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #ffffff;
+            border-right: 1px solid #eef2f6;
+            z-index: 1000;
+            transition: all 0.3s;
+            /* Tambahan flexbox agar footer bisa di bawah */
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-brand {
+            padding: 24px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0d6efd;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        .sidebar-menu {
+            padding: 16px;
+            list-style: none;
+            margin: 0;
+            /* Tambahan flex-grow agar menu mengisi sisa ruang */
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .sidebar-item {
+            margin-bottom: 4px;
+        }
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: #6c757d;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.925rem;
+            transition: all 0.2s;
+        }
+        .sidebar-link i {
+            font-size: 1.2rem;
+            margin-right: 12px;
+        }
+        .sidebar-link:hover {
+            background-color: #f8f9fa;
+            color: #0d6efd;
+        }
+        .sidebar-link.active {
+            background-color: #eaf2ff;
+            color: #0d6efd;
+            font-weight: 600;
+        }
+        /* Main Content Wrapper */
+        .main-wrapper {
+            margin-left: 260px;
+            padding: 40px;
+            min-height: 100vh;
+            transition: all 0.3s;
+        }
+        /* Custom Premium Card Styles */
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+            background-color: #ffffff;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #f8f9fa;
+            padding: 20px 24px;
+            border-top-left-radius: 16px !important;
+            border-top-right-radius: 16px !important;
+        }
+        .card-body {
+            padding: 24px;
+        }
+        /* Table Aesthetics */
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .table thead th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 14px;
+            border-bottom: 1px solid #eef2f6;
+        }
+        .table tbody td {
+            padding: 16px 14px;
+            border-bottom: 1px solid #f8f9fa;
+            font-size: 0.875rem;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #fafbfc;
+        }
+        /* Status Badges */
+        .badge-premium {
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
-<div class="d-flex">
-    <nav class="sidebar p-3 d-flex flex-column" style="width: 260px;">
-        <div class="brand-logo fs-5 mb-4 px-2"><i class="bi bi-diagram-3-fill"></i> SPK Seleksi Karyawan</div>
 
-        <ul class="nav nav-pills flex-column flex-grow-1">
-            <li class="nav-item">
-                <a href="{{ route('dashboard') }}" class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <i class="bi bi-grid-fill me-2"></i> Dashboard
+    <div class="sidebar">
+        <div class="sidebar-brand d-flex align-items-center">
+            <i class="bi bi-cpu-fill text-primary me-2 fs-4"></i>
+            <span>HR Hybrid Engine</span>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li class="sidebar-item">
+                <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <i class="bi bi-grid-1x2-fill"></i> Dashboard
                 </a>
             </li>
-
-            @if (in_array(auth()->user()->role, ['admin', 'hrd']))
-            <li class="nav-item">
-                <a href="{{ route('dataset.index') }}" class="nav-link {{ request()->routeIs('dataset.*') ? 'active' : '' }}">
-                    <i class="bi bi-database-fill me-2"></i> Dataset Kandidat
+            <li class="sidebar-item">
+                <a href="{{ route('dataset.index') }}" class="sidebar-link {{ request()->routeIs('dataset.*') ? 'active' : '' }}">
+                    <i class="bi bi-database-fill"></i> Dataset Master
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="{{ route('cv-analytics.index') }}" class="nav-link {{ request()->routeIs('cv-analytics.*') ? 'active' : '' }}">
-                    <i class="bi bi-file-earmark-person-fill me-2"></i> CV Analytics
+            <li class="sidebar-item">
+                <a href="{{ route('ahp.index') }}" class="sidebar-link {{ request()->routeIs('ahp.*') ? 'active' : '' }}">
+                    <i class="bi bi-diagram-3-fill"></i> Matriks AHP
                 </a>
             </li>
-            @endif
-
-            @if (auth()->user()->role === 'admin')
-            <li class="nav-item">
-                <a href="{{ route('ahp.index') }}" class="nav-link {{ request()->routeIs('ahp.*') ? 'active' : '' }}">
-                    <i class="bi bi-sliders me-2"></i> AHP - Kriteria
+            <li class="sidebar-item">
+                <a href="{{ route('random-forest.index') }}" class="sidebar-link {{ request()->routeIs('random-forest.*') ? 'active' : '' }}">
+                    <i class="bi bi-tree-fill"></i> Random Forest
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="{{ route('random-forest.index') }}" class="nav-link {{ request()->routeIs('random-forest.*') ? 'active' : '' }}">
-                    <i class="bi bi-cpu-fill me-2"></i> Random Forest
+            <li class="sidebar-item">
+                <a href="{{ route('cv-analytics.index') }}" class="sidebar-link {{ request()->routeIs('cv-analytics.*') ? 'active' : '' }}">
+                    <i class="bi bi-file-earmark-person-fill"></i> CV Analytics
                 </a>
             </li>
-            @endif
-
-            <li class="nav-item">
-                <a href="{{ route('hasil-spk.index') }}" class="nav-link {{ request()->routeIs('hasil-spk.*') ? 'active' : '' }}">
-                    <i class="bi bi-trophy-fill me-2"></i> Hasil SPK
+            <li class="sidebar-item">
+                <a href="{{ route('hasil-spk.index') }}" class="sidebar-link {{ request()->routeIs('hasil-spk.*') ? 'active' : '' }}">
+                    <i class="bi bi-trophy-fill"></i> Hasil Akhir SPK
                 </a>
             </li>
         </ul>
 
-        <div class="pt-3 border-top">
-            <div class="small text-muted px-2">Login sebagai</div>
-            <div class="fw-semibold px-2 mb-2">
-                {{ auth()->user()->name }} <span class="badge bg-light text-dark">{{ auth()->user()->role }}</span>
-            </div>
-            <form action="{{ route('logout') }}" method="POST" class="px-2">
-                @csrf
-                <button class="btn btn-outline-danger btn-sm w-100"><i class="bi bi-box-arrow-right"></i> Logout</button>
-            </form>
-        </div>
-    </nav>
-
-    <main class="flex-grow-1">
-        <nav class="navbar navbar-top px-4 py-3">
-            <span class="fw-semibold">@yield('title', 'Dashboard')</span>
-        </nav>
-
-        <div class="p-4">
-            @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="sidebar-footer p-3 border-top mt-auto bg-light">
+            @auth
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center overflow-hidden">
+                        <div class="avatar bg-primary text-white fw-bold rounded-circle p-2 me-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 35px; height: 35px;">
+                            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                        </div>
+                        <div class="text-truncate">
+                            <div class="fw-bold text-dark small mb-0">{{ Auth::user()->name }}</div>
+                            <div class="text-muted" style="font-size: 0.7rem;">{{ ucfirst(Auth::user()->role ?? 'Project Manager') }}</div>
+                        </div>
+                    </div>
+                    <form action="{{ route('logout') }}" method="POST" class="m-0">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-hover-danger border-0 text-danger p-1" title="Logout">
+                            <i class="bi bi-box-arrow-right fs-5"></i>
+                        </button>
+                    </form>
                 </div>
-            @endif
-            @if (session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            @else
+                <div class="d-grid">
+                    <a href="{{ route('login') }}" class="btn btn-primary btn-sm rounded-pill fw-medium shadow-sm py-2">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Login Sistem
+                    </a>
                 </div>
-            @endif
-
-            @yield('content')
+            @endauth
         </div>
-    </main>
-</div>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-@yield('scripts')
+    <div class="main-wrapper">
+        @yield('content')
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

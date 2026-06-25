@@ -17,7 +17,6 @@ class HybridEngineService
         $kriterias = Kriteria::all();
         $bobot = $kriterias->mapWithKeys(fn ($k) => [$k->kode => (float) $k->bobot])->toArray();
 
-        // Skala normalisasi diambil dari data historis (big data) agar lebih stabil
         $datasetReferensi = Kandidat::where('sumber', 'dataset');
         $minMax = [
             'experience_encoded' => [$datasetReferensi->min('experience_encoded'), $datasetReferensi->max('experience_encoded')],
@@ -25,8 +24,6 @@ class HybridEngineService
             'training_hours' => [$datasetReferensi->min('training_hours'), $datasetReferensi->max('training_hours')],
         ];
 
-        // Yang diranking adalah kandidat PELAMAR (hasil upload CV),
-        // bukan data historis Kaggle yang hanya dipakai untuk training Random Forest.
         $kandidats = Kandidat::where('sumber', 'cv')
             ->whereNotNull('experience_encoded')
             ->whereNotNull('education_level_encoded')
@@ -42,14 +39,17 @@ class HybridEngineService
             $skorAhp = $this->hitungSkorAhpKandidat($kandidat, $bobot, $minMax);
 
             $prediksi = PrediksiRandomForest::where('kandidat_id', $kandidat->id)->first();
-            $skorRf = $prediksi ? (float) $prediksi->nilai_prediksi : 0;
+            $skorRfRaw = $prediksi ? (float) $prediksi->nilai_prediksi : 0;
+
+            // NORMALISASI: Naikkan nilai RF agar kontribusinya setara dengan AHP
+            $skorRf = min($skorRfRaw * 2.5, 1.0);
 
             $skorAkhir = (self::BOBOT_AHP * $skorAhp) + (self::BOBOT_RF * $skorRf);
 
             $hasil[] = [
                 'kandidat_id' => $kandidat->id,
                 'skor_ahp' => round($skorAhp, 5),
-                'skor_rf' => round($skorRf, 5),
+                'skor_rf' => round($skorRf, 5), // Menyimpan skor RF yang sudah dinormalisasi
                 'skor_akhir' => round($skorAkhir, 5),
             ];
         }
@@ -89,6 +89,6 @@ class HybridEngineService
         [$min, $max] = $minMax;
         if ($max == $min) return 0;
         $result = ($value - $min) / ($max - $min);
-        return max(0, min(1, $result)); // dibatasi 0-1 supaya tidak overflow
+        return max(0, min(1, $result)); 
     }
 }

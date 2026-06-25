@@ -36,8 +36,6 @@
     <small class="text-muted">
         Akun demo: <br>
         admin@spk.test / password123 (Admin)<br>
-        hrd@spk.test / password123 (HRD)<br>
-        manajer@spk.test / password123 (Manajer SDM)
     </small>
 </div>
 </body>

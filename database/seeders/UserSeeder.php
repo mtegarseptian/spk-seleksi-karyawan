@@ -15,17 +15,5 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password123'),
             'role' => 'admin',
         ]);
-
-        User::updateOrCreate(['email' => 'hrd@spk.test'], [
-            'name' => 'Staff HRD',
-            'password' => Hash::make('password123'),
-            'role' => 'hrd',
-        ]);
-
-        User::updateOrCreate(['email' => 'manajer@spk.test'], [
-            'name' => 'Manajer SDM',
-            'password' => Hash::make('password123'),
-            'role' => 'manajer_sdm',
-        ]);
     }
 }

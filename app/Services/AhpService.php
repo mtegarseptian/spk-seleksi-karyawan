@@ -4,66 +4,57 @@ namespace App\Services;
 
 class AhpService
 {
-    // Tabel Random Index (Saaty) untuk n=1..10
-    protected array $ri = [
-        1 => 0, 2 => 0, 3 => 0.58, 4 => 0.9, 5 => 1.12,
-        6 => 1.24, 7 => 1.32, 8 => 1.41, 9 => 1.45, 10 => 1.49,
+    // Tabel Random Index (RI) standar dari Saaty
+    protected $ri_values = [
+        1 => 0.00, 2 => 0.00, 3 => 0.58, 4 => 0.90, 5 => 1.12, 
+        6 => 1.24, 7 => 1.32, 8 => 1.41, 9 => 1.45, 10 => 1.49
     ];
 
-    public function hitung(array $matrix): array
+    public function hitung(array $matrix)
     {
         $n = count($matrix);
+        $colSums = array_fill(0, $n, 0);
+        $weights = array_fill(0, $n, 0);
 
-        // 1. Jumlah tiap kolom
-        $jumlahKolom = array_fill(0, $n, 0);
-        for ($j = 0; $j < $n; $j++) {
-            for ($i = 0; $i < $n; $i++) {
-                $jumlahKolom[$j] += $matrix[$i][$j];
-            }
-        }
-
-        // 2. Normalisasi matriks
-        $normalisasi = [];
+        // 1. Hitung jumlah per kolom
         for ($i = 0; $i < $n; $i++) {
             for ($j = 0; $j < $n; $j++) {
-                $normalisasi[$i][$j] = $matrix[$i][$j] / $jumlahKolom[$j];
+                $colSums[$j] += $matrix[$i][$j];
             }
         }
 
-        // 3. Bobot prioritas = rata-rata tiap baris hasil normalisasi
-        $bobot = [];
+        // 2. Normalisasi matriks dan cari Vektor Prioritas (Bobot)
+        $normalizedMatrix = [];
         for ($i = 0; $i < $n; $i++) {
-            $bobot[$i] = array_sum($normalisasi[$i]) / $n;
-        }
-
-        // 4. Weighted sum vector (matriks asli x bobot)
-        $weightedSum = array_fill(0, $n, 0);
-        for ($i = 0; $i < $n; $i++) {
+            $rowSum = 0;
             for ($j = 0; $j < $n; $j++) {
-                $weightedSum[$i] += $matrix[$i][$j] * $bobot[$j];
+                // Cegah pembagian dengan nol
+                $val = $colSums[$j] != 0 ? $matrix[$i][$j] / $colSums[$j] : 0;
+                $normalizedMatrix[$i][$j] = $val;
+                $rowSum += $val;
             }
+            $weights[$i] = $rowSum / $n;
         }
 
-        // 5. Consistency vector
-        $consistencyVector = [];
+        // 3. Hitung Lambda Max (Nilai Eigen Maksimum)
+        $lambdaMax = 0;
         for ($i = 0; $i < $n; $i++) {
-            $consistencyVector[$i] = $weightedSum[$i] / $bobot[$i];
+            $lambdaMax += $colSums[$i] * $weights[$i];
         }
 
-        // 6. Lambda max, CI, CR
-        $lambdaMax = array_sum($consistencyVector) / $n;
-        $ci = ($lambdaMax - $n) / ($n - 1);
-        $ri = $this->ri[$n] ?? 1.12;
-        $cr = $ri == 0 ? 0 : $ci / $ri;
+        // 4. Hitung CI dan CR
+        $ci = ($n > 1) ? ($lambdaMax - $n) / ($n - 1) : 0;
+        $ri = $this->ri_values[$n] ?? 1.49; // Fallback ke 1.49 jika kriteria sangat banyak
+        $cr = ($n > 2 && $ri > 0) ? $ci / $ri : 0;
 
         return [
-            'bobot' => $bobot,
-            'normalisasi' => $normalisasi,
+            'matriks_awal' => $matrix,
+            'matriks_normalisasi' => $normalizedMatrix,
+            'bobot' => $weights,
             'lambda_max' => $lambdaMax,
             'ci' => $ci,
-            'ri' => $ri,
             'cr' => $cr,
-            'konsisten' => $cr <= 0.1,
+            'is_consistent' => $cr <= 0.1 // True jika nilai CR di bawah atau sama dengan 10%
         ];
     }
 }

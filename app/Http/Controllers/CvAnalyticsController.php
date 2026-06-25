@@ -40,8 +40,6 @@ class CvAnalyticsController extends Controller
             $jumlahProyek = $parser->extractJumlahProyek(storage_path('app/public/' . $portfolioPath));
         }
 
-        // Cari city_development_index berdasarkan kota yang diinput,
-        // jika tidak ada gunakan rata-rata dataset historis sebagai nilai netral.
         $cityIndex = null;
         if ($request->filled('kota')) {
             $cityIndex = Kandidat::where('sumber', 'dataset')
@@ -96,11 +94,39 @@ class CvAnalyticsController extends Controller
         ];
 
         $skorAhp = $hybridEngineService->hitungSkorAhpKandidat($kandidat, $bobot, $minMax);
+        
         $prediksi = $kandidat->prediksi;
-        $skorRf = $prediksi ? (float) $prediksi->nilai_prediksi : null;
+        $skorRfRaw = $prediksi ? (float) $prediksi->nilai_prediksi : null;
+        
+        $skorRf = $skorRfRaw !== null ? min($skorRfRaw * 2.5, 1.0) : null;
+        
         $skorAkhir = $skorRf !== null ? (0.6 * $skorAhp + 0.4 * $skorRf) : null;
         $cvUrl = Storage::url($kandidat->cv_path);
 
         return view('cv_analytics.show', compact('kandidat', 'skorAhp', 'skorRf', 'skorAkhir', 'cvUrl'));
+    }
+
+    /**
+     * Menghapus data kandidat dan file CV fisik dari storage.
+     */
+    public function destroy($id)
+    {
+        $kandidat = Kandidat::findOrFail($id);
+
+        // Hapus file CV dari storage public jika ada
+        if ($kandidat->cv_path && Storage::disk('public')->exists($kandidat->cv_path)) {
+            Storage::disk('public')->delete($kandidat->cv_path);
+        }
+
+        // Hapus file Portfolio dari storage public jika ada
+        if ($kandidat->portfolio_path && Storage::disk('public')->exists($kandidat->portfolio_path)) {
+            Storage::disk('public')->delete($kandidat->portfolio_path);
+        }
+
+        // Hapus record dari database (termasuk relasi jika ada cascade delete)
+        $kandidat->delete();
+
+        return redirect()->route('cv-analytics.index')
+            ->with('success', 'Data kandidat dan file CV berhasil dihapus permanen.');
     }
 }
